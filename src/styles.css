@@ -138,7 +138,80 @@
   }
 
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
+    background-color: #0A0A0A;
+    color: #FFFFFF;
   }
+}
+
+/* ============================================================
+   Aurora Hub — ported game shell styles
+   ============================================================ */
+
+.writing-vertical {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.mask-overlay {
+  background: linear-gradient(to top, rgba(10, 10, 10, 1) 0%, rgba(10, 10, 10, 0) 100%);
+}
+
+.border-thin {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.border-thin-strong {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0d0d0d;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #dc2626;
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.8);
+}
+
+.deck-horizontal-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #dc2626 #121212;
+  -webkit-overflow-scrolling: touch;
+}
+
+.deck-horizontal-scroll::-webkit-scrollbar {
+  height: 10px;
+}
+
+.deck-horizontal-scroll::-webkit-scrollbar-track {
+  background: #141414;
+  border-top: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.deck-horizontal-scroll::-webkit-scrollbar-thumb {
+  background: #dc2626;
+  border-radius: 2px;
+}
+
+.deck-horizontal-scroll::-webkit-scrollbar-thumb:hover {
+  background: #ef4444;
+}
+
+/* Pixel-perfect virtual-resolution canvases (640x360 internal, integer upscale) */
+.pixel-canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
