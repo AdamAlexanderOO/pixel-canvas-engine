@@ -464,7 +464,7 @@ export default function App() {
       id="smartphone-app-root"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="relative min-h-screen w-full text-white font-sans flex flex-col pb-24 overflow-x-hidden transition-colors duration-300"
+      className="relative min-h-screen w-full text-white font-sans flex flex-col pb-24 overflow-x-clip transition-colors duration-300"
       style={{
         backgroundColor: currentTheme.bgDark,
       }}
@@ -715,7 +715,7 @@ export default function App() {
                 Overcharge
               </button>
             </div>
-            <div className="border border-white/10 bg-neutral-950/80 p-2 sm:p-4 rounded-lg overflow-x-auto">
+            <div className="border border-white/10 bg-neutral-950/80 p-2 sm:p-4 rounded-lg overflow-clip max-w-full">
               <LightProtocolPCB
                 powerOn={powerOn}
                 subsystems={subsystems}
@@ -873,7 +873,7 @@ export default function App() {
               <h2 className="text-xs font-mono font-bold pb-1 border-b border-white/10" style={{ color: currentTheme.primary }}>
                 02 // LIGHT-PROTOCOL PCB MATRIX
               </h2>
-              <div className="border border-white/10 bg-neutral-950/80 p-2 sm:p-4 rounded-lg overflow-x-auto">
+              <div className="border border-white/10 bg-neutral-950/80 p-2 sm:p-4 rounded-lg overflow-clip max-w-full">
                 <LightProtocolPCB
                   powerOn={powerOn}
                   subsystems={subsystems}
