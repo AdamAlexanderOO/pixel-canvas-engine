@@ -63,6 +63,10 @@ import { SystemDiagnosticsPanel } from './components/SystemDiagnosticsPanel';
 import { sounds } from './utils/soundEffects';
 import { haptics } from './utils/haptics';
 import { AppThemeId, AppThemeConfig, APP_THEMES } from './utils/theme';
+import { EquipmentLoadout } from './components/EquipmentLoadout';
+import { LightProtocolBlueDeck } from './components/LightProtocolBlueDeck';
+import { EQUIP_ITEMS, DEFAULT_EQUIPPED, loadEquipped, saveEquipped, toggleEquip } from './utils/equipmentStore';
+import { Backpack, Binary } from 'lucide-react';
 
 const LIGHT_PRESETS: Record<LightPreset, LightProtocolData> = {
   AURORA_VIOLET: {
@@ -138,6 +142,8 @@ export type MobileTab =
   | 'SUBSYSTEMS'
   | 'ARCADE'
   | 'MOSAIC'
+  | 'LIGHT'
+  | 'LOADOUT'
   | 'ALL_FEED';
 
 export default function App() {
@@ -147,6 +153,10 @@ export default function App() {
   const [currentLightPreset, setCurrentLightPreset] = useState<LightPreset>('CYBER_CYAN');
   const [activeTab, setActiveTab] = useState<MobileTab>('CONSOLE');
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [equipped, setEquipped] = useState<string[]>(DEFAULT_EQUIPPED);
+  useEffect(() => { setEquipped(loadEquipped()); }, []);
+  const isTabEquipped = (tab: MobileTab) =>
+    tab === 'LOADOUT' || EQUIP_ITEMS.some((i) => i.tab === tab && equipped.includes(i.id));
 
   // Subsystem Status (Full 8 Subsystems from uploaded files)
   const [subsystems, setSubsystems] = useState<SubsystemStatus>({
@@ -256,7 +266,27 @@ export default function App() {
     { id: 'SUBSYSTEMS', label: '8 Matrix', icon: Activity, tag: '05' },
     { id: 'ARCADE', label: 'Arcade', icon: Gamepad2, tag: '06' },
     { id: 'MOSAIC', label: 'Mosaic', icon: Sparkles, tag: '07' },
+    { id: 'LIGHT', label: '.LIGHT Blue', icon: Binary, tag: '08' },
   ];
+  const VISIBLE_TABS = [
+    { id: 'LOADOUT' as MobileTab, label: 'Loadout', icon: Backpack, tag: '00' },
+    ...MOBILE_TABS.filter((t) => isTabEquipped(t.id)),
+  ];
+  const handleToggleEquip = (id: string) => {
+    const next = toggleEquip(equipped, id);
+    const item = EQUIP_ITEMS.find((i) => i.id === id);
+    if (!next) {
+      haptics.trigger('medium');
+      addLog(`${item?.slot} slots full — unequip an item first.`, 'WARNING', 'SYSTEM');
+      return;
+    }
+    setEquipped(next);
+    saveEquipped(next);
+    sounds.playClick(next.includes(id) ? 900 : 500);
+    haptics.trigger('medium');
+    addLog(`${item?.name} ${next.includes(id) ? 'equipped' : 'unequipped'}.`, 'SUCCESS', 'SYSTEM');
+    if (!next.includes(id) && item?.tab === activeTab) setActiveTab('LOADOUT');
+  };
 
   // Log append helper
   const addLog = (message: string, type: TerminalLog['type'] = 'INFO', source: TerminalLog['source'] = 'SYSTEM') => {
@@ -432,7 +462,7 @@ export default function App() {
     const diffX = touchStartX - touchEndX;
 
     if (Math.abs(diffX) > 90) {
-      const tabs: MobileTab[] = ['CONSOLE', 'PCB', 'GEARS', 'RADAR', 'SUBSYSTEMS', 'ARCADE', 'ALL_FEED'];
+      const tabs: MobileTab[] = VISIBLE_TABS.map((t) => t.id);
       const curIdx = tabs.indexOf(activeTab);
       if (diffX > 0 && curIdx < tabs.length - 1) {
         sounds.playClick(640);
@@ -464,7 +494,7 @@ export default function App() {
       id="smartphone-app-root"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="relative min-h-screen w-full text-white font-sans flex flex-col pb-24 overflow-x-hidden transition-colors duration-300"
+      className="relative min-h-screen w-full text-white font-sans flex flex-col pb-24 overflow-x-clip transition-colors duration-300"
       style={{
         backgroundColor: currentTheme.bgDark,
       }}
@@ -596,7 +626,7 @@ export default function App() {
             backgroundColor: 'rgba(5, 5, 8, 0.95)',
           }}
         >
-          {MOBILE_TABS.map((tab) => {
+          {VISIBLE_TABS.map((tab) => {
             const IconComp = tab.icon;
             const isActive = activeTab === tab.id;
             return (
@@ -715,7 +745,7 @@ export default function App() {
                 Overcharge
               </button>
             </div>
-            <div className="border border-white/10 bg-neutral-950/80 p-2 sm:p-4 rounded-lg overflow-x-auto">
+            <div className="border border-white/10 bg-neutral-950/80 p-2 sm:p-4 rounded-lg overflow-clip max-w-full">
               <LightProtocolPCB
                 powerOn={powerOn}
                 subsystems={subsystems}
@@ -824,6 +854,36 @@ export default function App() {
           </div>
         )}
 
+        {activeTab === 'LOADOUT' && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-1.5 border-b border-white/10 font-mono text-xs">
+              <span className="font-bold" style={{ color: currentTheme.primary }}>00 // EQUIPMENT LOADOUT</span>
+              <span className="text-neutral-400">{equipped.length} EQUIPPED</span>
+            </div>
+            <EquipmentLoadout
+              theme={currentTheme}
+              equipped={equipped}
+              onToggle={handleToggleEquip}
+              onOpen={(tab) => setActiveTab(tab as MobileTab)}
+            />
+          </div>
+        )}
+
+        {activeTab === 'LIGHT' && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between pb-1.5 border-b border-white/10 font-mono text-xs">
+              <span className="font-bold" style={{ color: currentTheme.primary }}>08 // .LIGHT PROTOCOL BLUE</span>
+              <span className="text-neutral-400">50/30/20 HIERARCHY</span>
+            </div>
+            <LightProtocolBlueDeck
+              theme={currentTheme}
+              powerOn={powerOn}
+              fluxFrequency={fluxFrequency}
+              onLog={(m) => addLog(m, 'INFO', 'LIGHT_PROTOCOL')}
+            />
+          </div>
+        )}
+
         {/* TAB 7: ROMAN MOSAIC & PIXEL CYPHER ENGINE */}
         {activeTab === 'MOSAIC' && (
           <div className="space-y-3">
@@ -873,7 +933,7 @@ export default function App() {
               <h2 className="text-xs font-mono font-bold pb-1 border-b border-white/10" style={{ color: currentTheme.primary }}>
                 02 // LIGHT-PROTOCOL PCB MATRIX
               </h2>
-              <div className="border border-white/10 bg-neutral-950/80 p-2 sm:p-4 rounded-lg overflow-x-auto">
+              <div className="border border-white/10 bg-neutral-950/80 p-2 sm:p-4 rounded-lg overflow-clip max-w-full">
                 <LightProtocolPCB
                   powerOn={powerOn}
                   subsystems={subsystems}

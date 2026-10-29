@@ -67,7 +67,7 @@ export const HologramGearEngine: React.FC<HologramGearEngineProps> = ({
   return (
     <div
       id="hologram-gear-engine"
-      className="relative w-full h-full min-h-[480px] bg-[#0A0A0A] border border-white/10 p-4 sm:p-5 overflow-hidden flex flex-col justify-between select-none"
+      className="relative w-full h-full min-h-[480px] bg-[#0A0A0A] border border-white/10 p-4 sm:p-5 overflow-clip flex flex-col justify-between select-none"
     >
       {/* Header Controls Bar */}
       <div className="relative z-20 flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-white/10">
@@ -106,7 +106,7 @@ export const HologramGearEngine: React.FC<HologramGearEngineProps> = ({
       </div>
 
       {/* Center 3-Tier Multi-Layer Interactive Visualizer */}
-      <div className="relative z-10 my-auto w-full h-[320px] flex items-center justify-center overflow-hidden">
+      <div className="relative z-10 my-auto w-full max-w-full h-[320px] flex items-center justify-center overflow-clip touch-pan-y">
         {/* Ambient Light Flare */}
         <div
           className="absolute w-72 h-72 rounded-full blur-3xl pointer-events-none transition-all duration-700 opacity-15"
@@ -117,7 +117,7 @@ export const HologramGearEngine: React.FC<HologramGearEngineProps> = ({
 
         {/* Transformable Stage with 3D Perspective */}
         <div
-          className="relative w-80 h-72 transition-transform duration-700"
+          className="relative w-72 max-w-[85%] h-72 shrink-0 transition-transform duration-700"
           style={{
             transform:
               engineState.viewMode === 'EXPLODED_3D'
