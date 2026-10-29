@@ -276,7 +276,7 @@ export default function App() {
     const next = toggleEquip(equipped, id);
     const item = EQUIP_ITEMS.find((i) => i.id === id);
     if (!next) {
-      haptics.trigger('error');
+      haptics.trigger('medium');
       addLog(`${item?.slot} slots full — unequip an item first.`, 'WARNING', 'SYSTEM');
       return;
     }
