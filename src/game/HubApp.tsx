@@ -1057,13 +1057,15 @@ export default function App() {
                   color: isActive ? currentTheme.primary : undefined,
                 }}
               >
-                <IconComp
-                  className="w-5 h-5 mb-0.5"
+                <span
+                  className="block"
                   style={{
                     color: isActive ? currentTheme.primary : undefined,
                     filter: isActive ? `drop-shadow(0 0 6px ${currentTheme.glowRgba})` : undefined,
                   }}
-                />
+                >
+                  <IconComp className="w-5 h-5 mb-0.5" />
+                </span>
                 <span className="text-[10px] tracking-tight">{tab.label}</span>
               </button>
             );

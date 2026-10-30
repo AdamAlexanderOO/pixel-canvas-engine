@@ -978,10 +978,10 @@ export const PixelArcade64x64: React.FC<PixelArcade64x64Props> = ({
     scene.add(particlesGroup);
 
     // Textures & Materials from Roman Mosaic Processor
-    const heroTex = createLevel4MosaicTexture('STARFIGHTER_INTERCEPTOR', 128);
-    const mechTex = createLevel4MosaicTexture('VALKYRIE_GUNDAM', 128);
-    const enemyTex = createLevel4MosaicTexture('STEALTH_CORVETTE', 128);
-    const bossTex = createLevel4MosaicTexture('CRUISER_BOSS', 128);
+    const heroTex = createLevel4MosaicTexture('STARFIGHTER_INTERCEPTOR', { width: 128, height: 128 });
+    const mechTex = createLevel4MosaicTexture('VALKYRIE_GUNDAM', { width: 128, height: 128 });
+    const enemyTex = createLevel4MosaicTexture('STEALTH_CORVETTE', { width: 128, height: 128 });
+    const bossTex = createLevel4MosaicTexture('CRUISER_BOSS', { width: 128, height: 128 });
 
     const heroMat = new THREE.MeshStandardMaterial({
       map: heroTex,
