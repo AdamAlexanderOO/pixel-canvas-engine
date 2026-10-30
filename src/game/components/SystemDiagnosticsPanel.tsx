@@ -165,7 +165,7 @@ Cap Target: ${targetFpsCap}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
       id="system-diagnostics-floating-panel"
       aria-label="System Diagnostics"
-      className={`fixed bottom-4 right-4 z-50 font-mono select-none border transition-all duration-300 ${
+      className={`fixed bottom-[70px] right-4 z-50 font-mono select-none border transition-all duration-300 ${
         isMinimized ? 'w-64' : 'w-80 sm:w-96'
       }`}
       style={{
