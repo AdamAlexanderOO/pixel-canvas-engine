@@ -47,6 +47,8 @@ import {
 } from '../../utils/customCharacterStore';
 import { InGameModulesAssetOverlay } from './InGameModulesAssetOverlay';
 import { getModulesForGame } from '../../data/gameModulesMetadata';
+import { Button } from '@/components/ui/button';
+import { addArcadeArtDirection, detailArcadeCharacter } from '../../engine/arcadeArtDirection';
 
 export type PixelGameType =
   | 'PIXEL_SPACE_SIM'
@@ -79,8 +81,8 @@ export const PixelArcade64x64: React.FC<PixelArcade64x64Props> = ({
   const [health, setHealth] = useState<number>(100);
   const [energy, setEnergy] = useState<number>(100);
   const [wave, setWave] = useState<number>(1);
-  const [fidelity, setFidelity] = useState<ArcadeFidelityResolution>(64);
-  const [crtEffect, setCrtEffect] = useState<boolean>(true);
+  const [fidelity, setFidelity] = useState<ArcadeFidelityResolution>(256);
+  const [crtEffect, setCrtEffect] = useState<boolean>(false);
   const [tesseraeGrid, setTesseraeGrid] = useState<boolean>(false);
   const [hdrGlint, setHdrGlint] = useState<boolean>(true);
   const [paletteMode, setPaletteMode] = useState<
@@ -328,11 +330,14 @@ export const PixelArcade64x64: React.FC<PixelArcade64x64Props> = ({
     const buffer = document.createElement('canvas');
     buffer.width = fidelity;
     buffer.height = fidelity;
-    const bCtx = buffer.getContext('2d', { willReadFrequently: true })!;
+    const bCtx = buffer.getContext('2d', { willReadFrequently: true });
+    if (!bCtx) return;
     bCtx.imageSmoothingEnabled = fidelity >= 256;
 
     // Coordinate multiplier to map 0..64 logical coordinates to fidelity resolution
     const S = fidelity / 64;
+    const backdrop = new Image();
+    backdrop.src = '/images/deep_space_nebula_1787434647356.jpg';
 
     const spawnEnemiesForSpace = () => {
       const state = engineRef.current;
@@ -393,6 +398,12 @@ export const PixelArcade64x64: React.FC<PixelArcade64x64Props> = ({
       // Clear dynamic buffer canvas
       bCtx.fillStyle = '#050711';
       bCtx.fillRect(0, 0, fidelity, fidelity);
+      if (activeGame === 'PIXEL_SPACE_SIM' && backdrop.complete && backdrop.naturalWidth > 0) {
+        bCtx.save();
+        bCtx.globalAlpha = 0.38;
+        bCtx.drawImage(backdrop, 0, 0, fidelity, fidelity);
+        bCtx.restore();
+      }
 
       // ==========================================
       // GAME 1: MULTI-FIDELITY SPACE DOGFIGHT SIM
@@ -947,7 +958,9 @@ export const PixelArcade64x64: React.FC<PixelArcade64x64Props> = ({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 1.35;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    const disposeArt = addArcadeArtDirection(scene, activeGame === 'PIXEL_SPACE_SIM' ? 'SPACE' : activeGame === 'PIXEL_PHOTON_RUNNER' ? 'RUNNER' : 'ARENA', true);
 
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
@@ -1226,6 +1239,9 @@ export const PixelArcade64x64: React.FC<PixelArcade64x64Props> = ({
       envGroup.add(sun);
     }
 
+    const disposeCharacterDetail = activeGame === 'PIXEL_GUNDAM_MECH' || activeGame === 'PIXEL_PHOTON_RUNNER'
+      ? detailArcadeCharacter(playerGroup, activeGame === 'PIXEL_PHOTON_RUNNER') : () => {};
+
     // Interactive 3D Render Loop
     let animId: number;
     let clock = new THREE.Clock();
@@ -1436,332 +1452,67 @@ export const PixelArcade64x64: React.FC<PixelArcade64x64Props> = ({
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
+      disposeArt();
+      disposeCharacterDetail();
+      scene.traverse((object) => {
+        if (object instanceof THREE.Mesh) {
+          object.geometry.dispose();
+          const materials = Array.isArray(object.material) ? object.material : [object.material];
+          materials.forEach((material) => material.dispose());
+        }
+      });
+      [heroTex, mechTex, enemyTex, bossTex].forEach((texture) => texture.dispose());
       renderer.dispose();
+      renderer.domElement.remove();
     };
   }, [arcadeEngineMode, activeGame, gameState, cameraView, wireframeMode, renderEnhanceMode]);
 
+  const games = [
+    { id: 'PIXEL_SPACE_SIM', name: 'Space Dogfight Sim', title: 'Void Squadron', image: '/images/space_starfighter_hero_1787089887255.jpg', icon: Rocket },
+    { id: 'PIXEL_GUNDAM_MECH', name: 'Gundam Mech Battle', title: 'Titan Arena', image: '/images/valkyrie_gundam_1787434609815.jpg', icon: Swords },
+    { id: 'PIXEL_CYBER_FPS', name: 'Pseudo-3D Cyber FPS', title: 'Neon Breach', image: '/images/cyber_plasma_rifle_1787089913135.jpg', icon: Crosshair },
+    { id: 'PIXEL_PHOTON_RUNNER', name: 'Photon Runner', title: 'Photon Rush', image: '/images/cyber_pilot_hero_1787089924400.jpg', icon: Zap },
+  ] as const;
+  const selectedGame = games.find((game) => game.id === activeGame) ?? games[0];
+  const hold = (key: string, pressed: boolean) => { keysRef.current[key] = pressed; };
+
   return (
-    <div className="bg-[#050711] border border-cyan-500/40 rounded-xl p-3 sm:p-5 text-white font-mono flex flex-col items-center space-y-4 shadow-2xl relative">
-      {/* Top Banner Navigation */}
-      <div className="w-full flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded bg-cyan-950 border border-cyan-500/50 text-cyan-400">
-            <Monitor className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-black text-sm sm:text-base tracking-wider text-white">
-                3D HOLOGRAPHIC & MULTI-FIDELITY ARCADE CABINET
-              </h3>
-              <span className="px-1.5 py-0.5 rounded text-[9px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold">
-                {arcadeEngineMode === '3D_TRUE_MESH' ? '3D TRUE MESH ENGINE' : `${fidelity}x${fidelity} 2D BUFFER`}
-              </span>
-            </div>
-            <p className="text-[10px] text-neutral-400">
-              Featuring fully fledged 3D image assets and real-time Three.js spatial meshes powered by Roman Mosaic synthesis
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Custom Character & Theme Studio Button */}
-          <button
-            type="button"
-            onClick={() => {
-              setModulesOverlayOpen(true);
-              sounds.playClick(800);
-              haptics.trigger('medium');
-            }}
-            className="px-2.5 py-1 rounded bg-purple-600/30 hover:bg-purple-600/50 border border-purple-400 text-purple-200 text-[10px] font-bold tracking-wider flex items-center gap-1 shadow-[0_0_10px_rgba(217,70,239,0.3)] transition-all"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-purple-300 animate-spin" />
-            <span>CUSTOM ASSET STUDIO</span>
-          </button>
-
-          {/* Engine Mode Toggle: 3D True Mesh vs 2D Multi-Res */}
-          <button
-            type="button"
-            onClick={() => {
-              setArcadeEngineMode((m) => (m === '3D_TRUE_MESH' ? '2D_PIXEL_BUFFER' : '3D_TRUE_MESH'));
-              sounds.playClick(750);
-              haptics.trigger('medium');
-            }}
-            className={`px-3 py-1 rounded text-xs font-bold tracking-wider flex items-center gap-1.5 border transition-all ${
-              arcadeEngineMode === '3D_TRUE_MESH'
-                ? 'bg-cyan-500 text-black border-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.6)] font-black'
-                : 'bg-white/10 text-cyan-300 border-white/20 hover:bg-white/20'
-            }`}
-          >
-            <Box className="w-3.5 h-3.5" />
-            <span>{arcadeEngineMode === '3D_TRUE_MESH' ? '3D TRUE MESH ACTIVE' : 'SWITCH TO 3D MESH'}</span>
-          </button>
-
-          {/* CRT scanline toggle */}
-          <button
-            type="button"
-            onClick={() => setCrtEffect(!crtEffect)}
-            className={`px-2 py-1 rounded border text-[10px] font-bold ${
-              crtEffect
-                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
-                : 'bg-white/5 text-neutral-400 border-white/10'
-            }`}
-          >
-            CRT: {crtEffect ? 'ON' : 'OFF'}
-          </button>
-
-          {/* Wireframe Mode toggle */}
-          <button
-            type="button"
-            onClick={() => setWireframeMode(!wireframeMode)}
-            className={`px-2 py-1 rounded border text-[10px] font-bold ${
-              wireframeMode
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                : 'bg-white/5 text-neutral-400 border-white/10'
-            }`}
-          >
-            WIREFRAME: {wireframeMode ? 'ON' : 'OFF'}
-          </button>
+    <div className="arcade-cabinet">
+      <div className="arcade-cabinet-heading">
+        <div><span className="arcade-eyebrow">MOSAIC COLLECTION / 0{games.findIndex((game) => game.id === activeGame) + 1}</span><h3>{selectedGame.title}</h3></div>
+        <div className="arcade-heading-actions">
+          <Button variant="ghost" size="icon" aria-label="Custom asset studio" title="Custom asset studio" onClick={() => setModulesOverlayOpen(true)}><Sparkles /></Button>
+          <Button variant="ghost" size="icon" aria-label={gameState === 'PLAYING' ? 'Pause game' : 'Resume game'} title={gameState === 'PLAYING' ? 'Pause game' : 'Resume game'} onClick={() => setGameState((state) => state === 'PLAYING' ? 'PAUSED' : 'PLAYING')}>{gameState === 'PLAYING' ? <Pause /> : <Play />}</Button>
         </div>
       </div>
-
-      {/* 3D Camera Controls & Rendering Modes Bar */}
-      {arcadeEngineMode === '3D_TRUE_MESH' ? (
-        <div className="w-full bg-neutral-950/90 border border-cyan-500/30 rounded-lg p-2 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-xs">
-            <Camera className="w-4 h-4 text-cyan-400" />
-            <span className="text-neutral-300 font-bold">3D CAMERA PERSPECTIVE:</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {(
-              [
-                { id: 'CHASE_CAM', label: 'Third-Person Chase', icon: Camera },
-                { id: 'COCKPIT_CAM', label: 'Cockpit / 1st Person', icon: Eye },
-                { id: 'ISOMETRIC', label: 'Tactical Isometric', icon: Box },
-                { id: 'ORBIT_360', label: '360° Orbit Cam', icon: Orbit },
-              ] as const
-            ).map((cam) => {
-              const isSel = cameraView === cam.id;
-              const Icon = cam.icon;
-              return (
-                <button
-                  type="button"
-                  key={cam.id}
-                  onClick={() => {
-                    setCameraView(cam.id);
-                    sounds.playClick(650);
-                    haptics.trigger('light');
-                  }}
-                  className={`px-2.5 py-1 rounded text-[10px] font-bold transition-all flex items-center gap-1.5 border ${
-                    isSel
-                      ? 'bg-cyan-950 text-cyan-200 border-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.4)]'
-                      : 'bg-white/5 text-neutral-400 border-white/10 hover:text-white'
-                  }`}
-                >
-                  <Icon className="w-3 h-3 text-cyan-400" />
-                  <span>{cam.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ) : (
-        /* Dynamic Pixel Fidelity Resolution Selector Bar (2D Mode) */
-        <div className="w-full bg-neutral-950/80 border border-white/10 rounded-lg p-2 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-xs">
-            <Cpu className="w-4 h-4 text-cyan-400" />
-            <span className="text-neutral-300 font-bold">PIXEL FIDELITY SCALING:</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {(
-              [
-                { res: 64, label: '64x64 Lo-Fi Crunch', badge: '8-Bit', color: 'border-cyan-500' },
-                { res: 128, label: '128x128 Neo-Geo', badge: '32-Bit', color: 'border-blue-500' },
-                { res: 256, label: '256x256 Hi-Bit HD', badge: 'HD', color: 'border-emerald-500' },
-                { res: 512, label: '512x512 Full HD', badge: 'FHD', color: 'border-purple-500' },
-                { res: 1024, label: '1024x1024 Ultra-HD & Beyond', badge: '4K', color: 'border-amber-500' },
-              ] as const
-            ).map((item) => {
-              const isSel = fidelity === item.res;
-              return (
-                <button
-                  type="button"
-                  key={item.res}
-                  onClick={() => {
-                    setFidelity(item.res);
-                    sounds.playClick(900);
-                    haptics.trigger('medium');
-                  }}
-                  className={`px-2.5 py-1 rounded text-[10px] font-bold transition-all flex items-center gap-1.5 border ${
-                    isSel
-                      ? `bg-cyan-950 text-white ${item.color} shadow-[0_0_12px_rgba(0,240,255,0.4)]`
-                      : 'bg-white/5 text-neutral-400 border-white/10 hover:text-white'
-                  }`}
-                >
-                  <span className="px-1 py-0.2 rounded bg-black/60 text-[8px] font-black text-cyan-300">
-                    {item.badge}
-                  </span>
-                  <span>{item.res}x{item.res}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Game Selector Tabs */}
-      <div className="w-full grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-        {[
-          { id: 'PIXEL_SPACE_SIM', name: 'Space Dogfight Sim', icon: Rocket, color: 'text-cyan-400' },
-          { id: 'PIXEL_GUNDAM_MECH', name: 'Gundam Mech Battle', icon: Swords, color: 'text-blue-400' },
-          { id: 'PIXEL_CYBER_FPS', name: 'Pseudo-3D Cyber FPS', icon: Crosshair, color: 'text-emerald-400' },
-          { id: 'PIXEL_PHOTON_RUNNER', name: 'Photon Runner', icon: Zap, color: 'text-amber-400' },
-        ].map((g) => {
-          const Icon = g.icon;
-          const isSel = activeGame === g.id;
-          return (
-            <button
-              type="button"
-              key={g.id}
-              onClick={() => {
-                setActiveGame(g.id as PixelGameType);
-                sounds.playClick(700);
-                haptics.trigger('click');
-              }}
-              className={`p-2 rounded border text-left transition-all flex items-center gap-2 ${
-                isSel
-                  ? 'bg-cyan-950/80 border-cyan-400 text-white shadow-[0_0_10px_rgba(0,240,255,0.3)]'
-                  : 'bg-white/5 border-white/10 text-neutral-400 hover:text-white'
-              }`}
-            >
-              <Icon className={`w-4 h-4 ${g.color}`} />
-              <span className="text-xs font-bold">{g.name}</span>
-            </button>
-          );
-        })}
+      <div className="arcade-collection-tabs" role="group" aria-label="Mosaic games">
+        {games.map((game) => <Button key={game.id} variant="ghost" className="arcade-collection-tab" aria-label={game.name} aria-pressed={game.id === activeGame} onClick={() => { setActiveGame(game.id); sounds.playClick(700); }}><img src={game.image} alt="" /><span>{game.title}</span></Button>)}
       </div>
-
-      {/* Main Arcade Screen Container */}
-      <div className="relative border-4 border-neutral-800 rounded-2xl p-2 bg-[#020308] shadow-[0_0_30px_rgba(0,240,255,0.15)] flex flex-col items-center">
-        {/* Top Header Marquee */}
-        <div className="w-full flex items-center justify-between text-[11px] px-3 py-1 bg-neutral-900 border border-neutral-700 rounded-t-lg text-cyan-300">
-          <div>
-            1UP <b className="text-white">{score.toString().padStart(6, '0')}</b>
-          </div>
-          <div>
-            HIGH <b className="text-amber-400">{highScore.toString().padStart(6, '0')}</b>
-          </div>
-          <div>
-            HEALTH <b className="text-emerald-400">{health}%</b>
-          </div>
-          <div>
-            MODE <b className="text-purple-300">{arcadeEngineMode === '3D_TRUE_MESH' ? 'TRUE 3D' : `${fidelity}x${fidelity}`}</b>
-          </div>
+      <div className="arcade-display-shell">
+        <div className="arcade-scoreboard">
+          <div><span>SCORE</span><strong>{score.toString().padStart(6, '0')}</strong></div>
+          <div><span>BEST</span><strong>{highScore.toString().padStart(6, '0')}</strong></div>
+          <div><span>SHIELD</span><strong>{health}%</strong></div>
+          <div><span>WAVE</span><strong>0{wave}</strong></div>
         </div>
-
-        {/* Dynamic Display Viewport (3D WebGL Three.js or 2D Multi-Res Buffer) */}
-        <div className="relative overflow-hidden rounded-lg bg-black my-2 aspect-square w-[280px] sm:w-[380px] md:w-[420px] max-w-full">
-          {arcadeEngineMode === '3D_TRUE_MESH' ? (
-            <div ref={threeMountRef} className="w-full h-full block cursor-grab active:cursor-grabbing" />
-          ) : (
-            <canvas
-              ref={canvasRef}
-              width={420}
-              height={420}
-              className="w-full h-full block"
-              style={{ imageRendering: fidelity <= 128 ? 'pixelated' : 'auto' }}
-            />
-          )}
-
-          {/* CRT Scanline and Phosphor Glow Layer */}
-          {crtEffect && (
-            <div
-              className="absolute inset-0 pointer-events-none opacity-25 mix-blend-screen"
-              style={{
-                backgroundImage:
-                  fidelity <= 128
-                    ? 'linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.75) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 255, 0, 0.06))'
-                    : 'linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.45) 50%)',
-                backgroundSize: fidelity <= 128 ? '100% 4px, 6px 100%' : '100% 2px',
-              }}
-            />
-          )}
+        <div className={`arcade-display ${arcadeEngineMode === '2D_PIXEL_BUFFER' ? 'arcade-display-pixel' : ''}`}>
+          {arcadeEngineMode === '3D_TRUE_MESH' ? <div ref={threeMountRef} className="w-full h-full block" /> : <canvas ref={canvasRef} width={640} height={640} className={`w-full h-full block ${fidelity <= 128 ? 'pixel-canvas' : ''}`} />}
+          {crtEffect && <div className="arcade-crt" />}
+          <div className="arcade-display-label"><span className="arcade-live-dot" />{arcadeEngineMode === '3D_TRUE_MESH' ? 'LIVE / 3D' : `LIVE / ${fidelity} × ${fidelity}`}</div>
+          {gameState !== 'PLAYING' && <div className="arcade-pause"><Pause /><h4>{gameState === 'GAMEOVER' ? 'Game over' : 'Paused'}</h4><Button className="arcade-action" onClick={() => setGameState('PLAYING')}><Play />Resume</Button></div>}
         </div>
-
-        {/* Virtual Arcade D-Pad & Controls for Touch or Quick Clicks */}
-        <div className="w-full grid grid-cols-2 gap-4 p-2 bg-neutral-900/60 border border-neutral-800 rounded-b-lg">
-          {/* D-Pad Buttons */}
-          <div className="flex flex-col items-center justify-center gap-1">
-            <button
-              type="button"
-              onMouseDown={() => (keysRef.current['ArrowUp'] = true)}
-              onMouseUp={() => (keysRef.current['ArrowUp'] = false)}
-              onTouchStart={() => (keysRef.current['ArrowUp'] = true)}
-              onTouchEnd={() => (keysRef.current['ArrowUp'] = false)}
-              className="w-10 h-10 rounded bg-neutral-800 active:bg-cyan-500 border border-neutral-700 text-white font-bold flex items-center justify-center text-xs"
-            >
-              ▲
-            </button>
-            <div className="flex gap-1">
-              <button
-                type="button"
-                onMouseDown={() => (keysRef.current['ArrowLeft'] = true)}
-                onMouseUp={() => (keysRef.current['ArrowLeft'] = false)}
-                onTouchStart={() => (keysRef.current['ArrowLeft'] = true)}
-                onTouchEnd={() => (keysRef.current['ArrowLeft'] = false)}
-                className="w-10 h-10 rounded bg-neutral-800 active:bg-cyan-500 border border-neutral-700 text-white font-bold flex items-center justify-center text-xs"
-              >
-                ◀
-              </button>
-              <button
-                type="button"
-                onMouseDown={() => (keysRef.current['ArrowDown'] = true)}
-                onMouseUp={() => (keysRef.current['ArrowDown'] = false)}
-                onTouchStart={() => (keysRef.current['ArrowDown'] = true)}
-                onTouchEnd={() => (keysRef.current['ArrowDown'] = false)}
-                className="w-10 h-10 rounded bg-neutral-800 active:bg-cyan-500 border border-neutral-700 text-white font-bold flex items-center justify-center text-xs"
-              >
-                ▼
-              </button>
-              <button
-                type="button"
-                onMouseDown={() => (keysRef.current['ArrowRight'] = true)}
-                onMouseUp={() => (keysRef.current['ArrowRight'] = false)}
-                onTouchStart={() => (keysRef.current['ArrowRight'] = true)}
-                onTouchEnd={() => (keysRef.current['ArrowRight'] = false)}
-                className="w-10 h-10 rounded bg-neutral-800 active:bg-cyan-500 border border-neutral-700 text-white font-bold flex items-center justify-center text-xs"
-              >
-                ▶
-              </button>
-            </div>
+        <div className="arcade-control-deck">
+          <div className="arcade-dpad">
+            {([{key:'ArrowUp', symbol:'▲', label:'Move up', position:'up'}, {key:'ArrowLeft', symbol:'◀', label:'Move left', position:'left'}, {key:'ArrowDown', symbol:'▼', label:'Move down', position:'down'}, {key:'ArrowRight', symbol:'▶', label:'Move right', position:'right'}]).map((control) => <Button key={control.key} variant="ghost" className={`arcade-pad arcade-pad-${control.position}`} aria-label={control.label} title={control.label} onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); hold(control.key, true); }} onPointerUp={() => hold(control.key, false)} onPointerCancel={() => hold(control.key, false)} onLostPointerCapture={() => hold(control.key, false)}>{control.symbol}</Button>)}
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center justify-center gap-2">
-            <button
-              type="button"
-              onMouseDown={() => (keysRef.current['Space'] = true)}
-              onMouseUp={() => (keysRef.current['Space'] = false)}
-              onTouchStart={() => (keysRef.current['Space'] = true)}
-              onTouchEnd={() => (keysRef.current['Space'] = false)}
-              className="w-12 h-12 rounded-full bg-red-600 active:bg-red-400 border-2 border-red-400 text-white font-black shadow-[0_0_10px_rgba(239,68,68,0.5)] flex items-center justify-center text-xs"
-            >
-              FIRE
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setGameState((s) => (s === 'PLAYING' ? 'PAUSED' : 'PLAYING'));
-                sounds.playClick(600);
-              }}
-              className="w-10 h-10 rounded-full bg-amber-600 active:bg-amber-400 border border-amber-400 text-black font-bold flex items-center justify-center text-[10px]"
-            >
-              PAUSE
-            </button>
-          </div>
+          <div className="arcade-fire-controls"><Button className="arcade-fire" aria-label="Fire weapon" onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); hold('Space', true); }} onPointerUp={() => hold('Space', false)} onPointerCancel={() => hold('Space', false)} onLostPointerCapture={() => hold('Space', false)}><Crosshair /><span>FIRE</span></Button><Button variant="ghost" size="icon" title={gameState === 'PLAYING' ? 'Pause game' : 'Resume game'} aria-label={gameState === 'PLAYING' ? 'Pause game' : 'Resume game'} onClick={() => setGameState((state) => state === 'PLAYING' ? 'PAUSED' : 'PLAYING')}>{gameState === 'PLAYING' ? <Pause /> : <Play />}</Button></div>
         </div>
       </div>
+      <details className="arcade-settings"><summary><Sliders />Display settings<ChevronRight /></summary><div className="arcade-settings-content">
+        <div className="arcade-setting-group"><span>RENDERER</span><Button variant="ghost" size="sm" aria-pressed={arcadeEngineMode === '3D_TRUE_MESH'} onClick={() => setArcadeEngineMode('3D_TRUE_MESH')}><Box />3D mesh</Button><Button variant="ghost" size="sm" aria-pressed={arcadeEngineMode === '2D_PIXEL_BUFFER'} onClick={() => setArcadeEngineMode('2D_PIXEL_BUFFER')}><Monitor />Pixel buffer</Button></div>
+        {arcadeEngineMode === '3D_TRUE_MESH' ? <div className="arcade-setting-group"><span>CAMERA</span>{([{id:'CHASE_CAM',label:'Chase',icon:Camera},{id:'COCKPIT_CAM',label:'Cockpit',icon:Eye},{id:'ISOMETRIC',label:'Isometric',icon:Box},{id:'ORBIT_360',label:'Orbit',icon:Orbit}] as const).map((view) => <Button key={view.id} variant="ghost" size="sm" aria-pressed={cameraView === view.id} onClick={() => setCameraView(view.id)}><view.icon />{view.label}</Button>)}</div> : <div className="arcade-setting-group"><span>RESOLUTION</span>{([64,128,256,512,1024] as const).map((res) => <Button key={res} variant="ghost" size="sm" aria-pressed={fidelity === res} onClick={() => setFidelity(res)}>{res} × {res}</Button>)}</div>}
+        <div className="arcade-setting-group"><span>FINISH</span><label><input type="checkbox" checked={crtEffect} onChange={(event) => setCrtEffect(event.target.checked)} />CRT scanlines</label><label><input type="checkbox" checked={wireframeMode} onChange={(event) => setWireframeMode(event.target.checked)} />Wireframe</label></div>
+      </div></details>
 
       {/* In-Game Modules & Custom Asset Studio Overlay */}
       {modulesOverlayOpen && (

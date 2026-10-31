@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { addArcadeArtDirection } from '../../engine/arcadeArtDirection';
 import {
   Rocket,
   Shield,
@@ -158,6 +159,9 @@ export const SpaceDogfightSim3D: React.FC<SpaceDogfightSimProps> = ({
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.25;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    const disposeArcadeArt = addArcadeArtDirection(scene, 'SPACE');
 
     while (containerRef.current.firstChild) {
       containerRef.current.removeChild(containerRef.current.firstChild);
@@ -828,6 +832,7 @@ export const SpaceDogfightSim3D: React.FC<SpaceDogfightSimProps> = ({
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       cancelAnimationFrame(gameRef.current.animFrameId);
+      disposeArcadeArt();
       renderer.dispose();
     };
   }, []);

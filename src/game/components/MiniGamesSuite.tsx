@@ -30,6 +30,7 @@ import { SpaceDogfightSim3D } from './games/SpaceDogfightSim3D';
 import { CyberFpsShooter3D } from './games/CyberFpsShooter3D';
 import { ThirdPersonTacticalShooter3D } from './games/ThirdPersonTacticalShooter3D';
 import { PixelArcade64x64 } from './games/PixelArcade64x64';
+import { Button } from '@/components/ui/button';
 
 // Images generated for space sim, armor, weapon, and character
 const ASSET_STARFIGHTER = '/images/space_starfighter_hero_1787089887255.jpg';
@@ -106,215 +107,27 @@ export const MiniGamesSuite: React.FC<{
   return (
     <div
       id="arcade-games-suite"
-      className={`border border-white/10 bg-[#0A0A0A] text-neutral-200 font-mono transition-all duration-300 ${
-        isSuiteFullscreen
-          ? 'fixed inset-0 z-50 bg-[#050712] w-screen h-screen overflow-y-auto p-4 sm:p-6 rounded-none'
-          : 'p-4 sm:p-7 rounded-xl'
-      }`}
+      className={`arcade-suite ${isSuiteFullscreen ? 'arcade-suite-fullscreen' : ''}`}
     >
-      {/* Top Fullscreen Banner / Suite Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-white/10 gap-3 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Gamepad2 className="w-5 h-5 text-red-500 animate-pulse" />
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-black tracking-widest text-white uppercase">
-                  3D ACTION ARCADE & FLIGHT SIM SUITE
-                </h2>
-                {isSuiteFullscreen && (
-                  <span className="px-2 py-0.5 text-[9px] font-bold bg-cyan-500/20 border border-cyan-400 text-cyan-300 rounded uppercase tracking-wider animate-pulse">
-                    FULLSCREEN DECK
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-neutral-400 mt-0.5">
-                Full 3D space dogfighting, 1st-person cyber FPS arena, 3rd-person tactical mech shooters, and hangar arsenal loadouts.
-              </p>
-            </div>
-          </div>
+      <header className="arcade-heading">
+        <div><span className="arcade-eyebrow">AURORA // PLAY DIVISION</span><h2>Aurora Arcade<span className="arcade-heading-dot">.</span></h2></div>
+        <div className="arcade-heading-actions">
+          {onExitToMenu && <Button variant="ghost" size="icon" onClick={handleReturnToConsole} title="Return to console" aria-label="Return to console"><ArrowLeft /></Button>}
+          <Button variant="ghost" size="icon" onClick={toggleFullscreenMode} title={isSuiteFullscreen ? 'Exit fullscreen' : 'Fullscreen deck'} aria-label={isSuiteFullscreen ? 'Exit fullscreen' : 'Fullscreen deck'}>{isSuiteFullscreen ? <Minimize2 /> : <Maximize2 />}</Button>
         </div>
-
-        {/* Global Controls & Primary Game Selector Categories */}
-        <div className="flex flex-wrap items-center gap-1.5 bg-black/60 p-1.5 border border-white/10 rounded-lg">
-          {/* Back to Console Button */}
-          {onExitToMenu && (
-            <button
-              type="button"
-              onClick={handleReturnToConsole}
-              className="px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1 bg-red-950/80 hover:bg-red-900 border border-red-500/40 text-red-200 active:scale-95"
-              title="Return to Main Hardware Console"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>MAIN MENU</span>
-            </button>
-          )}
-
-          {/* 3D Action & Sim Group */}
-          <button
-            type="button"
-            onClick={() => {
-              sounds.playClick(600);
-              haptics.trigger('click');
-              setActiveGame('SPACE_SIM_3D');
-            }}
-            className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1.5 ${
-              activeGame === 'SPACE_SIM_3D'
-                ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(239,68,68,0.5)]'
-                : 'text-neutral-300 hover:text-white bg-white/5'
-            }`}
-          >
-            <Rocket className="w-3.5 h-3.5" />
-            <span>3D Space Sim</span>
-          </button>
-
-          {/* 64x64 Retro Pixel Arcade Button */}
-          <button
-            type="button"
-            onClick={() => {
-              sounds.playClick(630);
-              haptics.trigger('medium');
-              setActiveGame('PIXEL_ARCADE_64');
-            }}
-            className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1.5 ${
-              activeGame === 'PIXEL_ARCADE_64'
-                ? 'bg-amber-600 text-white shadow-[0_0_14px_rgba(245,158,11,0.6)] border border-amber-400'
-                : 'text-amber-300 hover:text-white bg-amber-950/40 border border-amber-500/30'
-            }`}
-          >
-            <Gamepad2 className="w-3.5 h-3.5 text-amber-400" />
-            <span>64x64 Pixel Arcade</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              sounds.playClick(650);
-              haptics.trigger('click');
-              setActiveGame('CYBER_FPS_3D');
-            }}
-            className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1.5 ${
-              activeGame === 'CYBER_FPS_3D'
-                ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(239,68,68,0.5)]'
-                : 'text-neutral-300 hover:text-white bg-white/5'
-            }`}
-          >
-            <Crosshair className="w-3.5 h-3.5" />
-            <span>1st-Person FPS</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              sounds.playClick(700);
-              haptics.trigger('click');
-              setActiveGame('TACTICAL_TPS_3D');
-            }}
-            className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1.5 ${
-              activeGame === 'TACTICAL_TPS_3D'
-                ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(239,68,68,0.5)]'
-                : 'text-neutral-300 hover:text-white bg-white/5'
-            }`}
-          >
-            <Shield className="w-3.5 h-3.5" />
-            <span>3rd-Person TPS</span>
-          </button>
-
-          {/* Arsenal & Hangar Loadouts */}
-          <button
-            type="button"
-            onClick={() => {
-              sounds.playClick(720);
-              haptics.trigger('medium');
-              setActiveGame('ARSENAL_LOADOUT');
-            }}
-            className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded transition-all flex items-center gap-1.5 ${
-              activeGame === 'ARSENAL_LOADOUT'
-                ? 'bg-cyan-600 text-white shadow-[0_0_12px_rgba(0,240,255,0.5)]'
-                : 'text-cyan-300 hover:text-white bg-cyan-950/40 border border-cyan-500/30'
-            }`}
-          >
-            <Swords className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Hangar & Arsenal</span>
-          </button>
-
-          {/* Retro Micro-Sims */}
-          <button
-            type="button"
-            onClick={() => {
-              sounds.playClick(750);
-              haptics.trigger('light');
-              setActiveGame('PHOTON_RUNNER');
-            }}
-            className={`px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded transition-all ${
-              activeGame === 'PHOTON_RUNNER'
-                ? 'bg-white text-black'
-                : 'text-neutral-400 hover:text-white'
-            }`}
-          >
-            Runner
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              sounds.playClick(800);
-              haptics.trigger('light');
-              setActiveGame('GEAR_SYNC');
-            }}
-            className={`px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded transition-all ${
-              activeGame === 'GEAR_SYNC'
-                ? 'bg-white text-black'
-                : 'text-neutral-400 hover:text-white'
-            }`}
-          >
-            Gear
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              sounds.playClick(850);
-              haptics.trigger('light');
-              setActiveGame('RADAR_DEFENSE');
-            }}
-            className={`px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded transition-all ${
-              activeGame === 'RADAR_DEFENSE'
-                ? 'bg-white text-black'
-                : 'text-neutral-400 hover:text-white'
-            }`}
-          >
-            Radar
-          </button>
-
-          {/* Suite Dedicated Full-Screen Toggle */}
-          <button
-            type="button"
-            onClick={() => {
-              sounds.playClick(900);
-              haptics.trigger('warning');
-              toggleFullscreenMode();
-            }}
-            className={`px-2.5 py-1.5 rounded text-[11px] font-bold flex items-center gap-1.5 transition-all border ${
-              isSuiteFullscreen
-                ? 'bg-amber-600 border-amber-400 text-white shadow-[0_0_12px_rgba(245,158,11,0.6)]'
-                : 'bg-white/10 hover:bg-white/20 border-white/20 text-white'
-            }`}
-            title="Toggle Dedicated Fullscreen Gaming Mode"
-          >
-            {isSuiteFullscreen ? (
-              <>
-                <Minimize2 className="w-3.5 h-3.5 text-amber-300" />
-                <span className="hidden sm:inline">EXIT FULLSCREEN</span>
-                <span className="sm:hidden">EXIT</span>
-              </>
-            ) : (
-              <>
-                <Maximize2 className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="hidden sm:inline">FULLSCREEN DECK</span>
-                <span className="sm:hidden">FULL</span>
-              </>
-            )}
-          </button>
-        </div>
+      </header>
+      <nav className="arcade-library" aria-label="Arcade games">
+        {([
+          { id: 'SPACE_SIM_3D', name: '3D Space Sim', caption: 'VOID HORIZON', image: ASSET_STARFIGHTER, icon: Rocket },
+          { id: 'PIXEL_ARCADE_64', name: 'Pixel Arcade', caption: 'MOSAIC COLLECTION', image: ASSET_VALKYRIE_GUNDAM, icon: Gamepad2 },
+          { id: 'CYBER_FPS_3D', name: '1st-Person FPS', caption: 'NEON BREACH', image: ASSET_PLASMA_RIFLE, icon: Crosshair },
+          { id: 'TACTICAL_TPS_3D', name: '3rd-Person TPS', caption: 'TITAN PROTOCOL', image: ASSET_MECH_ARMOR, icon: Shield },
+        ] as const).map((game) => <Button key={game.id} variant="ghost" className="arcade-game-tile" aria-pressed={activeGame === game.id} onClick={() => { sounds.playClick(650); haptics.trigger('click'); setActiveGame(game.id); }}>
+          <img src={game.image} alt="" /><span className="arcade-tile-shade" /><span className="arcade-tile-number"><game.icon /></span><span className="arcade-tile-caption">{game.caption}</span><span className="arcade-tile-name">{game.name}</span>
+        </Button>)}
+      </nav>
+      <div className="arcade-secondary" role="group" aria-label="More arcade games">
+        {([{ id: 'ARSENAL_LOADOUT', name: 'Hangar & Arsenal', icon: Swords }, { id: 'PHOTON_RUNNER', name: 'Runner', icon: Zap }, { id: 'GEAR_SYNC', name: 'Gear', icon: Cpu }, { id: 'RADAR_DEFENSE', name: 'Radar', icon: Radio }, { id: 'HEX_DECRYPT', name: 'Cipher', icon: Layers }] as const).map((game) => <Button key={game.id} variant="ghost" size="sm" aria-pressed={activeGame === game.id} onClick={() => { sounds.playClick(700); setActiveGame(game.id); }}><game.icon />{game.name}</Button>)}
       </div>
 
       {!powerOn ? (
@@ -439,7 +252,8 @@ const PhotonRunnerGame: React.FC<{ flux: number }> = ({ flux }) => {
   }, [isPlaying, gameOver, playerLane, score]);
 
   return (
-    <div className="space-y-4">
+    <div className="arcade-microgame arcade-runner space-y-4">
+      <div className="arcade-game-title"><span>01 / CIRCUIT RACING</span><h3>Photon Flux</h3></div>
       {/* HUD Bar */}
       <div className="flex items-center justify-between p-3 border border-white/10 bg-white/5 text-xs">
         <div className="flex items-center gap-4">
@@ -473,7 +287,7 @@ const PhotonRunnerGame: React.FC<{ flux: number }> = ({ flux }) => {
       </div>
 
       {/* Game Stage (PCB Runway) */}
-      <div className="relative h-64 border border-white/20 bg-[#050505] overflow-hidden select-none">
+      <div className="arcade-runner-stage relative h-64 overflow-hidden select-none">
         {/* PCB Trace Lines (3 vertical lanes) */}
         <div className="absolute inset-0 grid grid-cols-3 divide-x divide-white/10">
           <div className="relative flex justify-center">
@@ -626,7 +440,8 @@ const GearSyncGame: React.FC<{ flux: number }> = ({ flux }) => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="arcade-microgame arcade-gear space-y-4">
+      <div className="arcade-game-title"><span>02 / HARMONIC ENGINE</span><h3>Gear Sync</h3></div>
       {/* Top Status */}
       <div className="flex items-center justify-between p-3 border border-white/10 bg-white/5 text-xs">
         <div>
@@ -810,7 +625,8 @@ const RadarDefenseGame: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="arcade-microgame arcade-radar space-y-4">
+      <div className="arcade-game-title"><span>03 / ORBITAL DEFENSE</span><h3>Sector Sentinel</h3></div>
       {/* Radar HUD */}
       <div className="flex items-center justify-between p-3 border border-white/10 bg-white/5 text-xs">
         <div>
@@ -828,7 +644,7 @@ const RadarDefenseGame: React.FC = () => {
       </div>
 
       {/* Interactive 360 Radar Canvas Area */}
-      <div className="relative h-72 border border-white/20 bg-[#050505] flex items-center justify-center overflow-hidden">
+      <div className="arcade-radar-stage relative h-72 flex items-center justify-center overflow-hidden">
         {/* Concentric rings */}
         <div className="absolute w-60 h-60 rounded-full border border-white/10" />
         <div className="absolute w-44 h-44 rounded-full border border-white/10" />

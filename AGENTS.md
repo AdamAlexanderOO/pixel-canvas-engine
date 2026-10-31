@@ -12,3 +12,5 @@
 ## Rules
 
 - Keep `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and `noPropertyAccessFromIndexSignature` off in `tsconfig.json`: the ported game code indexes arrays and option objects pervasively, and re-enabling any of them re-scores dozens of cosmetic errors that mask real ones.
+- Keep shared arcade scenery in `src/game/engine/arcadeArtDirection.ts`, decorative and separate from collision/game state; this lets games share visual improvements without changing their rules.
+- Define arcade presentation colors in `src/styles.css` and scope controls through the arcade shell; resolve CSS colors through a canvas before passing them to Three.js so OKLCH tokens render correctly.
