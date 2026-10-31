@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { addArcadeArtDirection } from '../../engine/arcadeArtDirection';
 import {
   Shield,
   Crosshair,
@@ -142,6 +143,9 @@ export const CyberFpsShooter3D: React.FC<CyberFpsShooterProps> = ({
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.25;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    const disposeArcadeArt = addArcadeArtDirection(scene, 'ARENA');
 
     while (containerRef.current.firstChild) {
       containerRef.current.removeChild(containerRef.current.firstChild);
@@ -604,6 +608,7 @@ export const CyberFpsShooter3D: React.FC<CyberFpsShooterProps> = ({
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('mousemove', onMouseMove);
       cancelAnimationFrame(engineRef.current.animFrameId);
+      disposeArcadeArt();
       renderer.dispose();
     };
   }, []);
