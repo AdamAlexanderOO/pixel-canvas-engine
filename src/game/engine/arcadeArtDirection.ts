@@ -2,10 +2,20 @@ import * as THREE from 'three';
 
 export type ArcadeWorld = 'SPACE' | 'ARENA' | 'RUNNER';
 
+function tokenColor(name: string) {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 1;
+  const context = canvas.getContext('2d');
+  if (!context) return new THREE.Color();
+  context.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  context.fillRect(0, 0, 1, 1);
+  const pixel = context.getImageData(0, 0, 1, 1).data;
+  return new THREE.Color().setRGB(pixel[0] / 255, pixel[1] / 255, pixel[2] / 255, THREE.SRGBColorSpace);
+}
+
 /** Decorative geometry only: never participates in collision or game state. */
 export function addArcadeArtDirection(scene: THREE.Scene, world: ArcadeWorld, compact = false) {
-  const css = getComputedStyle(document.documentElement);
-  const color = (name: string) => new THREE.Color(css.getPropertyValue(name).trim());
+  const color = tokenColor;
   const cyan = color('--arcade-cyan');
   const coral = color('--arcade-coral');
   const steel = color('--arcade-steel');
@@ -73,9 +83,8 @@ export function addArcadeArtDirection(scene: THREE.Scene, world: ArcadeWorld, co
 }
 
 export function detailArcadeCharacter(group: THREE.Group, runner: boolean) {
-  const css = getComputedStyle(document.documentElement);
-  const armor = new THREE.MeshStandardMaterial({ color: new THREE.Color(css.getPropertyValue('--arcade-text').trim()), metalness: 0.45, roughness: 0.55 });
-  const glow = new THREE.MeshBasicMaterial({ color: new THREE.Color(css.getPropertyValue('--arcade-cyan').trim()) });
+  const armor = new THREE.MeshStandardMaterial({ color: tokenColor('--arcade-text'), metalness: 0.45, roughness: 0.55 });
+  const glow = new THREE.MeshBasicMaterial({ color: tokenColor('--arcade-cyan') });
   const scale = runner ? 0.48 : 1;
   const part = (size: [number, number, number], pos: [number, number, number], luminous = false) => {
     const item = new THREE.Mesh(new THREE.BoxGeometry(...size.map((v) => v * scale) as [number, number, number]), luminous ? glow : armor);
