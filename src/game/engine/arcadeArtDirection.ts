@@ -24,6 +24,7 @@ export function addArcadeArtDirection(scene: THREE.Scene, world: ArcadeWorld, co
   group.name = 'Arcade scenery';
   scene.add(group);
   const materials: THREE.Material[] = [];
+  const textures: THREE.Texture[] = [];
   const solid = new THREE.MeshStandardMaterial({ color: steel, roughness: 0.72, metalness: 0.35 });
   const neon = new THREE.MeshBasicMaterial({ color: cyan });
   const warm = new THREE.MeshBasicMaterial({ color: coral });
@@ -40,6 +41,14 @@ export function addArcadeArtDirection(scene: THREE.Scene, world: ArcadeWorld, co
   group.add(fill, rim);
 
   if (world === 'SPACE') {
+    if (compact) {
+      const nebula = new THREE.TextureLoader().load('/images/deep_space_nebula_1787434647356.jpg');
+      nebula.colorSpace = THREE.SRGBColorSpace;
+      textures.push(nebula);
+      const skyMaterial = new THREE.MeshBasicMaterial({ map: nebula, side: THREE.BackSide, color: steel });
+      materials.push(skyMaterial);
+      mesh(new THREE.SphereGeometry(250, 32, 24), skyMaterial, 0, 0, 0);
+    }
     const planetMat = new THREE.MeshStandardMaterial({ color: steel, roughness: 1, metalness: 0.1 });
     materials.push(planetMat);
     const radius = compact ? 9 : 85;
@@ -78,6 +87,7 @@ export function addArcadeArtDirection(scene: THREE.Scene, world: ArcadeWorld, co
       if (object instanceof THREE.Mesh) object.geometry.dispose();
     });
     materials.forEach((material) => material.dispose());
+    textures.forEach((texture) => texture.dispose());
     scene.remove(group);
   };
 }

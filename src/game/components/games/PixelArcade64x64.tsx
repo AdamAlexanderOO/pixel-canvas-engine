@@ -336,6 +336,8 @@ export const PixelArcade64x64: React.FC<PixelArcade64x64Props> = ({
 
     // Coordinate multiplier to map 0..64 logical coordinates to fidelity resolution
     const S = fidelity / 64;
+    const backdrop = new Image();
+    backdrop.src = '/images/deep_space_nebula_1787434647356.jpg';
 
     const spawnEnemiesForSpace = () => {
       const state = engineRef.current;
@@ -396,6 +398,12 @@ export const PixelArcade64x64: React.FC<PixelArcade64x64Props> = ({
       // Clear dynamic buffer canvas
       bCtx.fillStyle = '#050711';
       bCtx.fillRect(0, 0, fidelity, fidelity);
+      if (activeGame === 'PIXEL_SPACE_SIM' && backdrop.complete && backdrop.naturalWidth > 0) {
+        bCtx.save();
+        bCtx.globalAlpha = 0.38;
+        bCtx.drawImage(backdrop, 0, 0, fidelity, fidelity);
+        bCtx.restore();
+      }
 
       // ==========================================
       // GAME 1: MULTI-FIDELITY SPACE DOGFIGHT SIM
